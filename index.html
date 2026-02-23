@@ -109,6 +109,11 @@
             20% { transform: translateY(-20px) scale(1); opacity: 1; }
             100% { transform: translateY(-80px) scale(1); opacity: 0; }
         }
+        
+        @keyframes hintBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-8px); }
+        }
 
         .balloon::before {
             content: '';
@@ -134,10 +139,9 @@
         }
 
         @keyframes floatUp {
-            0% { transform: translateY(110vh) rotate(-5deg); opacity: 0; }
-            10% { opacity: 0.8; }
-            90% { opacity: 0.8; }
-            100% { transform: translateY(-100px) rotate(5deg); opacity: 0; }
+            0% { transform: translateY(0) rotate(-5deg); opacity: 1; }
+            95% { opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(5deg); opacity: 0; }
         }
 
         .balloon-text {
@@ -2138,7 +2142,6 @@
 
         function createBalloons() {
             const colors = ['#ff6b9d', '#ffd700', '#38bdf8', '#a855f7', '#34d399', '#f87171'];
-            const letterColors = ['#ff6b9d', '#ffd700', '#38bdf8', '#a855f7', '#34d399'];
             const balloonMessages = ['生日快乐！', '心想事成！', '好运连连！', '幸福美满！', '万事如意！', '天天开心！', '梦想成真！', '前程似锦！', '平安喜乐！', '福气满满！'];
 
             for (let i = 0; i < 10; i++) {
@@ -2146,8 +2149,9 @@
                     const balloon = document.createElement('div');
                     balloon.className = 'balloon';
                     balloon.style.left = Math.random() * 100 + '%';
+                    balloon.style.bottom = '-80px';
                     balloon.style.background = `radial-gradient(circle at 30% 30%, ${colors[i % colors.length]}, ${colors[(i + 1) % colors.length]})`;
-                    balloon.style.animationDelay = Math.random() * 3 + 's';
+                    balloon.style.animationDelay = '0s';
                     balloon.style.animationDuration = (12 + Math.random() * 6) + 's';
                     balloon.dataset.message = balloonMessages[i % balloonMessages.length];
                     
@@ -2172,8 +2176,17 @@
                         const message = document.createElement('div');
                         message.className = 'balloon-message';
                         message.textContent = balloon.dataset.message;
-                        message.style.left = rect.left + 'px';
-                        message.style.top = rect.top + 'px';
+                        let msgLeft, msgTop;
+                        if (rect.top < 100 || rect.top > window.innerHeight - 100) {
+                            msgLeft = rect.left < window.innerWidth / 2 ? '20%' : '70%';
+                            msgTop = '45%';
+                            message.style.position = 'fixed';
+                        } else {
+                            msgLeft = Math.min(Math.max(rect.left + rect.width + 10, 10), window.innerWidth - 120);
+                            msgTop = Math.max(rect.top, 50);
+                        }
+                        message.style.left = typeof msgLeft === 'string' ? msgLeft : msgLeft + 'px';
+                        message.style.top = typeof msgTop === 'string' ? msgTop : msgTop + 'px';
                         document.body.appendChild(message);
                         setTimeout(() => message.remove(), 2000);
                         
@@ -2181,35 +2194,27 @@
                     });
                     
                     document.body.appendChild(balloon);
-                }, i * 400);
+                }, i * 200);
             }
-
-            const texts = [
-                { left: '35%', top: '5%', text: 'H' },
-                { left: '40%', top: '5%', text: 'A' },
-                { left: '45%', top: '5%', text: 'P' },
-                { left: '50%', top: '5%', text: 'P' },
-                { left: '55%', top: '5%', text: 'Y' },
-                { left: '35%', top: '11%', text: 'B' },
-                { left: '40%', top: '11%', text: 'I' },
-                { left: '45%', top: '11%', text: 'R' },
-                { left: '50%', top: '11%', text: 'T' },
-                { left: '55%', top: '11%', text: 'H' },
-                { left: '60%', top: '11%', text: 'D' },
-                { left: '65%', top: '11%', text: 'A' },
-                { left: '70%', top: '11%', text: 'Y' }
-            ];
-
-            texts.forEach((t, i) => {
-                const text = document.createElement('div');
-                text.className = 'balloon-text';
-                text.textContent = t.text;
-                text.style.left = t.left;
-                text.style.top = t.top;
-                text.style.animationDelay = (i * 0.1) + 's';
-                text.style.color = letterColors[i % letterColors.length];
-                document.body.appendChild(text);
-            });
+            
+            const balloonHint = document.createElement('div');
+            balloonHint.className = 'balloon-hint';
+            balloonHint.textContent = '🎈 点击气球有惊喜~';
+            balloonHint.style.cssText = `
+                position: fixed;
+                bottom: 150px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 107, 157, 0.9);
+                color: white;
+                padding: 6px 15px;
+                border-radius: 15px;
+                font-size: 0.8em;
+                z-index: 10;
+                animation: hintBounce 2s ease-in-out infinite;
+            `;
+            document.body.appendChild(balloonHint);
+            setTimeout(() => balloonHint.remove(), 8000);
         }
 
         function initThreeJS() {
@@ -3264,6 +3269,7 @@
                 document.getElementById('welcome-modal').style.display = 'none';
                 document.getElementById('instruction-panel').style.display = 'block';
                 playBgm();
+                createBalloons();
             });
             
             document.getElementById('generate-btn').addEventListener('click', function() {
@@ -3666,7 +3672,6 @@
         function init() {
             localStorage.removeItem('birthdayMessage');
             initBackground();
-            createBalloons();
             bindEvents();
         }
 
